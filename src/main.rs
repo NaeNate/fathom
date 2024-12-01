@@ -1,13 +1,15 @@
+mod generate_moves;
+
+use generate_moves::generate_moves;
 use std::io::{self, Write};
 
 fn main() {
     let stdin = io::stdin();
     let mut stdout = io::stdout();
 
-    let mut boards_initialized = false;
+    let mut initialized = false;
     let mut boards: [u64; 12] = [0; 12];
-
-    let mut moves = 0;
+    let mut side = "white";
 
     for line in stdin.lines() {
         let command = line.unwrap();
@@ -24,42 +26,39 @@ fn main() {
             }
             "ucinewgame" => {}
             "position" => {
-                if boards_initialized {
-                    moves += 2;
+                if initialized {
                 } else {
-                    boards = [
-                        0b11111111 << 8,
-                        (1 << 1) | (1 << 6),
-                        (1 << 2) | (1 << 5),
-                        (1 << 0) | (1 << 7),
-                        (1 << 3),
-                        (1 << 4),
-                        0b11111111 << 48,
-                        (1 << 57) | (1 << 62),
-                        (1 << 58) | (1 << 61),
-                        (1 << 56) | (1 << 63),
-                        (1 << 59),
-                        (1 << 60),
-                    ];
-
-                    boards_initialized = true;
-
-                    if parts.len() > 2 {
-                        moves = 1;
+                    if parts[1] == "startpos" {
+                        boards = [
+                            0b11111111 << 8,
+                            (1 << 1) | (1 << 6),
+                            (1 << 2) | (1 << 5),
+                            (1 << 0) | (1 << 7),
+                            (1 << 3),
+                            (1 << 4),
+                            0b11111111 << 48,
+                            (1 << 57) | (1 << 62),
+                            (1 << 58) | (1 << 61),
+                            (1 << 56) | (1 << 63),
+                            (1 << 59),
+                            (1 << 60),
+                        ]
                     }
+
+                    if parts.contains(&"moves") {
+                        side = "black";
+
+                        writeln!(stdout, "{}", parts.last().unwrap()).unwrap();
+                    }
+
+                    initialized = true
                 }
             }
             "go" => {
-                writeln!(
-                    stdout,
-                    "bestmove {}",
-                    ["e2e4", "e7e5", "d2d3", "d7d6"][moves]
-                )
-                .unwrap();
+                let moves = generate_moves(boards, side);
             }
-            _ => {
-                writeln!(stdout, "Unknown command: {}", parts[0]).unwrap();
-            }
+            "quit" => break,
+            _ => writeln!(stdout, "unknown").unwrap(),
         }
     }
 }
